@@ -64,6 +64,8 @@ export default function BookingScreen() {
     );
   }
 
+  const currentEvent = event;
+
   async function handleBooking() {
     if (!Number.isInteger(seats) || seats < 1) {
       Alert.alert(
@@ -73,10 +75,10 @@ export default function BookingScreen() {
       return;
     }
 
-    if (seats > event.availableSeats) {
+    if (seats > currentEvent.availableSeats) {
       Alert.alert(
         'Not enough seats',
-        `Only ${event.availableSeats} seats are available.`
+        `Only ${currentEvent.availableSeats} seats are available.`
       );
       return;
     }
@@ -105,13 +107,13 @@ export default function BookingScreen() {
 
       await createBooking(
         session.token,
-        event.id,
+        Number(currentEvent.id),
         seats
       );
 
       Alert.alert(
         'Booking Confirmed',
-        `Your booking for ${event.name} has been confirmed.\n\nSeats: ${seats}\nTotal: Rs. ${totalPrice}`,
+        `Your booking for ${currentEvent.name} has been confirmed.\n\nSeats: ${seats}\nTotal: Rs. ${totalPrice}`,
         [
           {
             text: 'View My Bookings',

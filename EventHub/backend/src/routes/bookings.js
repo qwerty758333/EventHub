@@ -9,6 +9,42 @@ router.get('/test', (req, res) => {
   });
 });
 
+router.get('/my', authenticateToken, (req, res) => {
+  try {
+    const bookings = db
+      .prepare(`
+        SELECT
+          b.id,
+          b.user_id AS userId,
+          b.event_id AS eventId,
+          b.booking_date AS bookingDate,
+          b.number_of_seats AS numberOfSeats,
+          b.total_price AS totalPrice,
+          b.status,
+          e.name AS eventName,
+          e.image,
+          e.date,
+          e.time,
+          e.location,
+          e.category
+        FROM bookings b
+        JOIN events e
+          ON b.event_id = e.id
+        WHERE b.user_id = ?
+        ORDER BY b.booking_date DESC
+      `)
+      .all(req.user.id);
+
+    res.json(bookings);
+  } catch (error) {
+    console.error('Error fetching user bookings:', error);
+
+    res.status(500).json({
+      message: 'Failed to fetch bookings',
+    });
+  }
+});
+
 router.post('/', authenticateToken, (req, res) => {
   try {
     const { eventId, numberOfSeats } = req.body;
