@@ -14,6 +14,7 @@ export const events: Event[] = [
     category: 'Technology',
     price: 2500,
     availableSeats: 120,
+    totalSeats: 150,
   },
   {
     id: '2',
@@ -28,6 +29,7 @@ export const events: Event[] = [
     category: 'Music',
     price: 1500,
     availableSeats: 80,
+    totalSeats: 100,
   },
   {
     id: '3',
@@ -42,6 +44,7 @@ export const events: Event[] = [
     category: 'Business',
     price: 2000,
     availableSeats: 45,
+    totalSeats: 50,
   },
   {
     id: '4',
@@ -56,5 +59,6 @@ export const events: Event[] = [
     category: 'Sports',
     price: 1000,
     availableSeats: 300,
+    totalSeats: 500,
   },
 ];

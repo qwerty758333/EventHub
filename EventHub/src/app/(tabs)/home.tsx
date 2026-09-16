@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
+  Pressable,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -10,7 +11,9 @@ import {
 
 import{router} from 'expo-router';
 import EventCard from '../../components/EventCard';
-import { events } from '../../data/events';
+import { getEvents } from '@/services/api';
+import type { Event } from '@/types/event';
+import { events } from '@/data/events';
 
 const categories = [
   'All',
@@ -24,6 +27,29 @@ export default function HomeScreen() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] =
     useState('All');
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+  loadEvents();
+}, []);
+
+async function loadEvents() {
+  try {
+    setLoading(true);
+    setError('');
+
+    const data = await getEvents();
+
+    setEvents(data);
+  } catch (error) {
+    console.error('Error loading events:', error);
+    setError('Unable to load events.');
+  } finally {
+    setLoading(false);
+  }
+}
 
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
@@ -42,6 +68,35 @@ export default function HomeScreen() {
       return matchesSearch && matchesCategory;
     });
   }, [search, selectedCategory]);
+
+  if (loading) {
+  return (
+    <View style={styles.center}>
+      <Text style={styles.loadingText}>
+        Loading events...
+      </Text>
+    </View>
+  );
+}
+
+    if (error) {
+  return (
+    <View style={styles.center}>
+      <Text style={styles.errorText}>
+        {error}
+      </Text>
+
+      <Pressable
+        style={styles.retryButton}
+        onPress={loadEvents}
+      >
+        <Text style={styles.retryText}>
+          Try Again
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
 
   return (
     <SafeAreaView style={styles.container}>
@@ -212,4 +267,34 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: '#6B7280',
   },
+
+  center: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  padding: 20,
+},
+
+loadingText: {
+  fontSize: 16,
+  color: '#6B7280',
+},
+
+errorText: {
+  fontSize: 16,
+  color: '#DC2626',
+  marginBottom: 15,
+},
+
+retryButton: {
+  backgroundColor: '#5B5FEF',
+  paddingHorizontal: 20,
+  paddingVertical: 12,
+  borderRadius: 10,
+},
+
+retryText: {
+  color: '#FFFFFF',
+  fontWeight: '600',
+},
 });

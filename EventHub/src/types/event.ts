@@ -9,4 +9,5 @@ export type Event = {
   category: string;
   price: number;
   availableSeats: number;
+  totalSeats: number;
 };
