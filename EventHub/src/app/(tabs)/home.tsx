@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 
+import{router} from 'expo-router';
 import EventCard from '../../components/EventCard';
 import { events } from '../../data/events';
 
@@ -53,8 +54,13 @@ export default function HomeScreen() {
           <EventCard
             event={item}
             onPress={() => {
-              console.log('Selected event:', item.name);
-            }}
+  router.push({
+    pathname: '/events/[id]',
+    params: {
+      id: item.id,
+    },
+  });
+}}
           />
         )}
         ListHeaderComponent={
