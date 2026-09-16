@@ -7,6 +7,7 @@ export default function RootLayout() {
       <Stack.Screen name="login" />
       <Stack.Screen name="register" />
       <Stack.Screen name="events/[id]" />
+      <Stack.Screen name="booking/[id]" />
       <Stack.Screen name="(tabs)" />
     </Stack>
   );

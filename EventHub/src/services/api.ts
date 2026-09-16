@@ -1,4 +1,4 @@
-const API_URL = 'http://172.19.35.177:5000/api';
+const API_URL = 'http://localhost:5000/api';
 
 export async function getEvents() {
   const response = await fetch(`${API_URL}/events`);
@@ -71,6 +71,34 @@ export async function loginUser(
 
   if (!response.ok) {
     throw new Error(data.message || 'Login failed');
+  }
+
+  return data;
+}
+
+export async function createBooking(
+  token: string,
+  eventId: number,
+  numberOfSeats: number
+) {
+  const response = await fetch(`${API_URL}/bookings`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      eventId,
+      numberOfSeats,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || 'Failed to create booking'
+    );
   }
 
   return data;
