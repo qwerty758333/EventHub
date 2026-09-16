@@ -45,6 +45,67 @@ router.get('/my', authenticateToken, (req, res) => {
   }
 });
 
+router.put('/:id/cancel', authenticateToken, (req, res) => {
+  try {
+    const booking = db
+      .prepare(`
+        SELECT *
+        FROM bookings
+        WHERE id = ?
+          AND user_id = ?
+      `)
+      .get(req.params.id, req.user.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        message: 'Booking not found',
+      });
+    }
+
+    if (booking.status === 'CANCELLED') {
+      return res.status(400).json({
+        message: 'Booking is already cancelled',
+      });
+    }
+
+    if (booking.status === 'COMPLETED') {
+      return res.status(400).json({
+        message: 'Completed bookings cannot be cancelled',
+      });
+    }
+
+    const cancelBooking = db.transaction(() => {
+      db.prepare(`
+        UPDATE bookings
+        SET status = 'CANCELLED'
+        WHERE id = ?
+      `).run(booking.id);
+
+      db.prepare(`
+        UPDATE events
+        SET available_seats = available_seats + ?
+        WHERE id = ?
+      `).run(
+        booking.number_of_seats,
+        booking.event_id
+      );
+    });
+
+    cancelBooking();
+
+    res.json({
+      message: 'Booking cancelled successfully',
+    });
+
+  } catch (error) {
+    console.error('Booking cancellation error:', error);
+
+    res.status(500).json({
+      message: 'Failed to cancel booking',
+    });
+  }
+});
+
 router.post('/', authenticateToken, (req, res) => {
   try {
     const { eventId, numberOfSeats } = req.body;

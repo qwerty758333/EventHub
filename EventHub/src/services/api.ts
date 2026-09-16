@@ -122,3 +122,28 @@ export async function getMyBookings(token: string) {
 
   return data;
 }
+
+export async function cancelBooking(
+  token: string,
+  bookingId: number
+) {
+  const response = await fetch(
+    `${API_URL}/bookings/${bookingId}/cancel`,
+    {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || 'Failed to cancel booking'
+    );
+  }
+
+  return data;
+}
