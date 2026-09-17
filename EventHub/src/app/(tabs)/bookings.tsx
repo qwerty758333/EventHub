@@ -2,12 +2,16 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Modal,
+  Alert,
+  Pressable,
+  Platform,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 
-import { getMyBookings } from '@/services/api';
+import { getMyBookings, cancelBooking } from '@/services/api';
 import { getAuthSession } from '@/services/authStorage';
 import type { Booking } from '@/types/booking';
 
@@ -15,6 +19,9 @@ export default function BookingsScreen() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [cancellingBookingId, setCancellingBookingId] = useState<number | null>(null);
+  const [bookingToCancel, setBookingToCancel] =
+  useState<number | null>(null);
 
   useEffect(() => {
     loadBookings();
@@ -47,6 +54,50 @@ export default function BookingsScreen() {
       setLoading(false);
     }
   }
+
+  async function handleCancelBooking(bookingId: number) {
+  try {
+    setCancellingBookingId(bookingId);
+
+    const session = await getAuthSession();
+
+    if (!session) {
+      setError('Please login to cancel a booking.');
+      return;
+    }
+
+    await cancelBooking(
+      session.token,
+      bookingId
+    );
+
+    console.log(
+      'Booking cancelled successfully:',
+      bookingId
+    );
+
+    await loadBookings();
+
+  } catch (error) {
+    console.error(
+      'Cancellation failed:',
+      error
+    );
+
+    setError(
+      error instanceof Error
+        ? error.message
+        : 'Unable to cancel the booking.'
+    );
+
+  } finally {
+    setCancellingBookingId(null);
+  }
+}
+
+  function confirmCancelBooking(bookingId: number) {
+  setBookingToCancel(bookingId);
+}
 
   function renderBooking({ item }: { item: Booking }) {
     return (
@@ -98,6 +149,27 @@ export default function BookingsScreen() {
             {item.status}
           </Text>
         </View>
+        {String(item.status).trim().toUpperCase() === 'CONFIRMED' && (
+          <Pressable
+            disabled={cancellingBookingId === item.id}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.cancelButton,
+              pressed && styles.cancelButtonPressed,
+              cancellingBookingId === item.id && styles.cancelButtonDisabled,
+            ]}
+            onPress={() => {
+              console.log('Cancel button onPress fired:', item.id);
+              confirmCancelBooking(item.id);
+            }}
+          >
+            <Text style={styles.cancelButtonText}>
+              {cancellingBookingId === item.id
+                ? 'Cancelling...'
+                : 'Cancel Booking'}
+            </Text>
+          </Pressable>
+        )}
       </View>
     );
   }
@@ -125,32 +197,87 @@ export default function BookingsScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>
-        My Bookings
-      </Text>
+  <View style={styles.container}>
+    <Text style={styles.title}>
+      My Bookings
+    </Text>
 
-      {bookings.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>
-            No bookings yet
+    {bookings.length === 0 ? (
+      <View style={styles.empty}>
+        <Text style={styles.emptyTitle}>
+          No bookings yet
+        </Text>
+
+        <Text style={styles.emptyText}>
+          Your event bookings will appear here.
+        </Text>
+      </View>
+    ) : (
+      <FlatList
+        data={bookings}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderBooking}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+      />
+    )}
+
+    <Modal
+      visible={bookingToCancel !== null}
+      transparent
+      animationType="fade"
+      onRequestClose={() => {
+        setBookingToCancel(null);
+      }}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalCard}>
+
+          <Text style={styles.modalTitle}>
+            Cancel Booking
           </Text>
 
-          <Text style={styles.emptyText}>
-            Your event bookings will appear here.
+          <Text style={styles.modalMessage}>
+            Are you sure you want to cancel this booking?
           </Text>
+
+          <View style={styles.modalButtons}>
+
+            <Pressable
+              style={styles.keepButton}
+              onPress={() => {
+                setBookingToCancel(null);
+              }}
+            >
+              <Text style={styles.keepButtonText}>
+                Keep Booking
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.confirmCancelButton}
+              onPress={() => {
+                if (bookingToCancel !== null) {
+                  const id = bookingToCancel;
+
+                  setBookingToCancel(null);
+
+                  void handleCancelBooking(id);
+                }
+              }}
+            >
+              <Text style={styles.confirmCancelButtonText}>
+                Cancel Booking
+              </Text>
+            </Pressable>
+
+          </View>
+
         </View>
-      ) : (
-        <FlatList
-          data={bookings}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderBooking}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
-    </View>
-  );
+      </View>
+    </Modal>
+  </View>
+);
 }
 
 const styles = StyleSheet.create({
@@ -281,4 +408,91 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     textAlign: 'center',
   },
+
+  cancelButton: {
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: '#DC2626',
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+
+  cancelButtonPressed: {
+    opacity: 0.7,
+  },
+
+  cancelButtonDisabled: {
+    opacity: 0.5,
+  },
+
+  cancelButtonText: {
+    color: '#DC2626',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  modalOverlay: {
+  flex: 1,
+  backgroundColor: 'rgba(0, 0, 0, 0.45)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  padding: 24,
+},
+
+modalCard: {
+  width: '100%',
+  maxWidth: 420,
+  backgroundColor: '#FFFFFF',
+  borderRadius: 20,
+  padding: 24,
+},
+
+modalTitle: {
+  fontSize: 22,
+  fontWeight: '700',
+  color: '#1F2937',
+  marginBottom: 10,
+},
+
+modalMessage: {
+  fontSize: 15,
+  lineHeight: 22,
+  color: '#6B7280',
+  marginBottom: 24,
+},
+
+modalButtons: {
+  flexDirection: 'row',
+  gap: 10,
+},
+
+keepButton: {
+  flex: 1,
+  borderWidth: 1,
+  borderColor: '#D1D5DB',
+  borderRadius: 10,
+  paddingVertical: 12,
+  alignItems: 'center',
+},
+
+keepButtonText: {
+  fontSize: 14,
+  fontWeight: '700',
+  color: '#374151',
+},
+
+confirmCancelButton: {
+  flex: 1,
+  backgroundColor: '#DC2626',
+  borderRadius: 10,
+  paddingVertical: 12,
+  alignItems: 'center',
+},
+
+confirmCancelButtonText: {
+  fontSize: 14,
+  fontWeight: '700',
+  color: '#FFFFFF',
+},
 });
