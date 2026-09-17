@@ -5,7 +5,6 @@ import {
   Modal,
   Alert,
   Pressable,
-  Platform,
   StyleSheet,
   Text,
   View,

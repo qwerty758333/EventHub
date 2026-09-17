@@ -8,11 +8,13 @@ const db = require('./db/database');
 const eventsRoutes = require('./routes/events');
 const authRoutes = require('./routes/auth');
 const bookingsRoutes = require('./routes/bookings');
+const profileRoutes = require('./routes/profile');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use('/api/profile', profileRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/auth', authRoutes);
 

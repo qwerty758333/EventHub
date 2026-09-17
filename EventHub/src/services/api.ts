@@ -147,3 +147,56 @@ export async function cancelBooking(
 
   return data;
 }
+
+export async function getProfile(token: string) {
+  const response = await fetch(
+    `${API_URL}/profile`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || 'Failed to fetch profile'
+    );
+  }
+
+  return data;
+}
+
+export async function updateProfile(
+  token: string,
+  name: string,
+  phone: string
+) {
+  const response = await fetch(
+    `${API_URL}/profile`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name,
+        phone,
+      }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || 'Failed to update profile'
+    );
+  }
+
+  return data;
+}
