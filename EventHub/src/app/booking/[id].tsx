@@ -22,6 +22,8 @@ export default function BookingScreen() {
   const [event, setEvent] = useState<Event | null>(null);
   const [numberOfSeats, setNumberOfSeats] = useState('1');
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     loadEvent();
@@ -84,6 +86,8 @@ export default function BookingScreen() {
     }
 
     try {
+      setSaving(true);
+
       const session = await getAuthSession();
 
       if (!session) {
@@ -111,18 +115,7 @@ export default function BookingScreen() {
         seats
       );
 
-      Alert.alert(
-        'Booking Confirmed',
-        `Your booking for ${currentEvent.name} has been confirmed.\n\nSeats: ${seats}\nTotal: Rs. ${totalPrice}`,
-        [
-          {
-            text: 'View My Bookings',
-            onPress: () => {
-              router.replace('/(tabs)/bookings');
-            },
-          },
-        ]
-      );
+      setSuccess(true);
 
     } catch (error) {
       Alert.alert(
@@ -131,7 +124,47 @@ export default function BookingScreen() {
           ? error.message
           : 'Unable to create your booking.'
       );
+    } finally {
+      setSaving(false);
     }
+  }
+
+  if (success) {
+    return (
+      <View style={styles.successContainer}>
+        <View style={styles.successCard}>
+          <Text style={styles.successTitle}>
+            Booking Confirmed!
+          </Text>
+
+          <Text style={styles.successText}>
+            Your booking has been successfully confirmed.
+          </Text>
+
+          <Pressable
+            style={styles.button}
+            onPress={() => {
+              router.replace('/(tabs)/bookings');
+            }}
+          >
+            <Text style={styles.buttonText}>
+              View My Bookings
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.backToEventsButton}
+            onPress={() => {
+              router.replace('/(tabs)/home');
+            }}
+          >
+            <Text style={styles.backToEventsText}>
+              Back to Events
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    );
   }
 
   return (
@@ -191,12 +224,19 @@ export default function BookingScreen() {
       </View>
 
       <Pressable
-        style={styles.button}
-        onPress={handleBooking}
+        disabled={saving}
+        style={[styles.button, saving && styles.disabledButton]}
+        onPress={() => {
+          void handleBooking();
+        }}
       >
-        <Text style={styles.buttonText}>
-          Confirm Booking
-        </Text>
+        {saving ? (
+          <ActivityIndicator color="#FFFFFF" />
+        ) : (
+          <Text style={styles.buttonText}>
+            Confirm Booking
+          </Text>
+        )}
       </Pressable>
     </ScrollView>
   );
@@ -212,6 +252,34 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  successContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: '#F7F8FC',
+    padding: 20,
+  },
+
+  successCard: {
+    backgroundColor: '#ECFDF5',
+    borderRadius: 16,
+    padding: 24,
+  },
+
+  successTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#166534',
+    textAlign: 'center',
+  },
+
+  successText: {
+    fontSize: 15,
+    color: '#166534',
+    marginTop: 10,
+    marginBottom: 24,
+    textAlign: 'center',
   },
 
   loadingText: {
@@ -297,6 +365,25 @@ const styles = StyleSheet.create({
 
   buttonText: {
     color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '700',
+  },
+
+  disabledButton: {
+    opacity: 0.6,
+  },
+
+  backToEventsButton: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+
+  backToEventsText: {
+    color: '#374151',
     fontSize: 17,
     fontWeight: '700',
   },

@@ -39,6 +39,47 @@ export default function TabLayout() {
           ),
         }}
       />
-    </Tabs>
+
+      <Tabs.Screen
+        name="organizer"
+        options={{
+          title: 'Organizer',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons
+              name="briefcase-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />   
+      <Tabs.Screen
+  name="create-event"
+  options={{
+    title: 'Create Event',
+    tabBarIcon: ({ color, size }) => (
+      <Ionicons
+        name="add-circle-outline"
+        size={size}
+        color={color}
+      />
+    ),
+  }}
+/>
+      <Tabs.Screen
+        name="edit-event"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="event-bookings"
+        options={{
+          href: null,
+        }}
+      />
+      </Tabs>
+
+
   );
 }

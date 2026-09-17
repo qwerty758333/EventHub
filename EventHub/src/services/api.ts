@@ -123,6 +123,50 @@ export async function getMyBookings(token: string) {
   return data;
 }
 
+export async function getMyEvents(token: string) {
+  const response = await fetch(`${API_URL}/events/mine`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || 'Failed to fetch your events'
+    );
+  }
+
+  return data;
+}
+
+export async function getEventBookings(
+  token: string,
+  eventId: number
+) {
+  const response = await fetch(
+    `${API_URL}/events/${eventId}/bookings`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || 'Failed to fetch event bookings'
+    );
+  }
+
+  return data;
+}
+
 export async function cancelBooking(
   token: string,
   bookingId: number
@@ -195,6 +239,106 @@ export async function updateProfile(
   if (!response.ok) {
     throw new Error(
       data.message || 'Failed to update profile'
+    );
+  }
+
+  return data;
+}
+
+export async function createEvent(
+  token: string,
+  eventData: {
+    name: string;
+    description: string;
+    image: string;
+    date: string;
+    time: string;
+    location: string;
+    category: string;
+    price: number;
+    totalSeats: number;
+  }
+) {
+  const response = await fetch(
+    `${API_URL}/events`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(eventData),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || 'Failed to create event'
+    );
+  }
+
+  return data;
+}
+
+export async function updateEvent(
+token: string,
+eventId: number,
+eventData: {
+name: string;
+description: string;
+image: string;
+date: string;
+time: string;
+location: string;
+category: string;
+price: number;
+totalSeats: number;
+}
+) {
+const response = await fetch(
+`${API_URL}/events/${eventId}`,
+{
+method: 'PUT',
+headers: {
+'Content-Type': 'application/json',
+Authorization: `Bearer ${token}`,
+},
+body: JSON.stringify(eventData),
+}
+);
+
+const data = await response.json();
+
+if (!response.ok) {
+throw new Error(
+data.message || 'Failed to update event'
+);
+}
+
+return data;
+}
+
+export async function deleteEvent(
+  token: string,
+  eventId: number
+) {
+  const response = await fetch(
+    `${API_URL}/events/${eventId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || 'Failed to delete event'
     );
   }
 
