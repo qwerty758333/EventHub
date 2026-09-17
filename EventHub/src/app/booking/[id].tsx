@@ -13,6 +13,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { createBooking, getEvent } from '@/services/api';
 import { getAuthSession } from '@/services/authStorage';
+import {
+  requestNotificationPermission,
+  scheduleEventReminder,
+  sendLocalNotification,
+} from '@/services/notificationService';
 import type { Event } from '@/types/event';
 
 export default function BookingScreen() {
@@ -68,6 +73,46 @@ export default function BookingScreen() {
 
   const currentEvent = event;
 
+  function getEventStartDate(): Date | null {
+    const timeMatch = currentEvent.time
+      .trim()
+      .toUpperCase()
+      .match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/);
+
+    if (timeMatch) {
+      let hours = Number(timeMatch[1]);
+      const minutes = Number(timeMatch[2] || '0');
+      const meridiem = timeMatch[3];
+
+      if (meridiem === 'PM' && hours !== 12) {
+        hours += 12;
+      }
+
+      if (meridiem === 'AM' && hours === 12) {
+        hours = 0;
+      }
+
+      const normalizedTime = `${String(hours).padStart(2, '0')}:${String(
+        minutes
+      ).padStart(2, '0')}:00`;
+      const eventDate = new Date(
+        `${currentEvent.date}T${normalizedTime}`
+      );
+
+      return Number.isNaN(eventDate.getTime())
+        ? null
+        : eventDate;
+    }
+
+    const eventDate = new Date(
+      `${currentEvent.date}T${currentEvent.time}`
+    );
+
+    return Number.isNaN(eventDate.getTime())
+      ? null
+      : eventDate;
+  }
+
   async function handleBooking() {
     if (!Number.isInteger(seats) || seats < 1) {
       Alert.alert(
@@ -114,6 +159,48 @@ export default function BookingScreen() {
         Number(currentEvent.id),
         seats
       );
+
+      try {
+        const permissionGranted =
+          await requestNotificationPermission();
+
+        if (permissionGranted) {
+          await sendLocalNotification(
+            'Booking Confirmed',
+            'Your EventHub booking has been successfully confirmed.'
+          );
+        }
+      } catch (notificationError) {
+        console.error(
+          'Notification error:',
+          notificationError
+        );
+      }
+
+      try {
+        const eventStart = getEventStartDate();
+        const now = new Date();
+
+        if (eventStart && eventStart > now) {
+          const oneHourBefore = new Date(
+            eventStart.getTime() - 60 * 60 * 1000
+          );
+          const reminderDate = oneHourBefore > now
+            ? oneHourBefore
+            : new Date(now.getTime() + 1000);
+
+          await scheduleEventReminder(
+            'Event Reminder',
+            `Your EventHub event "${currentEvent.name}" starts in 1 hour.`,
+            reminderDate
+          );
+        }
+      } catch (reminderError) {
+        console.error(
+          'Event reminder error:',
+          reminderError
+        );
+      }
 
       setSuccess(true);
 

@@ -64,20 +64,15 @@ export default function TabLayout() {
         color={color}
       />
     ),
+    href: null,
   }}
 />
-      <Tabs.Screen
-        name="edit-event"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="event-bookings"
-        options={{
-          href: null,
-        }}
-      />
+        <Tabs.Screen
+          name="edit-event"
+          options={{
+            href: null,
+          }}
+        />
       </Tabs>
 
 

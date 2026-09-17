@@ -12,6 +12,10 @@ import {
 
 import { getMyBookings, cancelBooking } from '@/services/api';
 import { getAuthSession } from '@/services/authStorage';
+import {
+  requestNotificationPermission,
+  sendLocalNotification,
+} from '@/services/notificationService';
 import type { Booking } from '@/types/booking';
 
 export default function BookingsScreen() {
@@ -74,6 +78,23 @@ export default function BookingsScreen() {
       'Booking cancelled successfully:',
       bookingId
     );
+
+    try {
+      const permissionGranted =
+        await requestNotificationPermission();
+
+      if (permissionGranted) {
+        await sendLocalNotification(
+          'Booking Cancelled',
+          'Your EventHub booking has been successfully cancelled.'
+        );
+      }
+    } catch (notificationError) {
+      console.error(
+        'Notification error:',
+        notificationError
+      );
+    }
 
     await loadBookings();
 
